@@ -1,0 +1,33 @@
+services:
+  weather-tracker-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  weather-tracker-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@weather-tracker-db:5432/${POSTGRES_DB}
+      POLL_INTERVAL_MINUTES: ${POLL_INTERVAL_MINUTES}
+    volumes:
+      - ./alembic/versions:/app/alembic/versions
+      - ./config.json:/app/config.json
+    depends_on:
+      weather-tracker-db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
