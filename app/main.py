@@ -26,6 +26,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.include_router(forecasts.router)
+
 @app.get("/")
 def read_root():
     """Root endpoint"""
